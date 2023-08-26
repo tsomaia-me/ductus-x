@@ -1,15 +1,23 @@
 import {
   chain,
+  Channel,
+  ChannelMessage,
   delay,
   isChainEffect,
   isDelayEffect,
   isLogEffect,
   isManyEffect,
   isNewStateEffect,
+  isSendEffect,
+  isStatefulEffect,
   log,
   many,
   newState,
-  NewStateEffect
+  NewStateEffect,
+  send,
+  stateful,
+  StatefulEffect,
+  withMessages
 } from './effects'
 import {
   App,
@@ -18,20 +26,21 @@ import {
   EffectHandlers,
   EffectsFrom,
   getInternalState,
+  InternalStateUpdate,
   noop,
-  Runner,
   RunnerParams,
   State,
   StateUpdate,
-  withAddedInternalState
+  withAddedInternalState,
+  wrapInternalState
 } from './lib'
 import { handleChainEffect } from './runtime/handleChainEffect'
 import { handleDelayEffect } from './runtime/handleDelayEffect'
 import { handleLogEffect } from './runtime/handleLogEffect'
 import { handleManyEffect } from './runtime/handleManyEffect'
 import { handleNewStateEffect } from './runtime/handleNewState'
-import { isStatefulEffect, stateful, StatefulEffect } from './effects/stateful'
 import { handleStatefulEffect } from './runtime/handleStatefulEffect'
+import { handleSendEffect } from './runtime/handleSendEffect'
 
 const BUILT_IN_EFFECT_HANDLERS = <S extends State>() => ({
   newState: {
@@ -48,6 +57,12 @@ const BUILT_IN_EFFECT_HANDLERS = <S extends State>() => ({
     test: isStatefulEffect,
     handle: handleStatefulEffect,
   },
+  withMessages: {
+    effect: withMessages as (channel: Channel, toEffect: (messages: ChannelMessage[]) => Effect) => StatefulEffect<S>,
+    test: isStatefulEffect,
+    handle: handleStatefulEffect,
+  },
+  send: { effect: send, test: isSendEffect, handle: handleSendEffect },
 })
 
 type Task = {
@@ -109,6 +124,20 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
     }
   }
 
+  function updateInternalState(state: InternalStateUpdate) {
+    const newState = typeof state === 'function'
+      ? state(getInternalState(currentState))
+      : state
+
+    currentState = {
+      ...currentState,
+      ...wrapInternalState({
+        ...getInternalState(currentState),
+        ...newState,
+      }),
+    }
+  }
+
   function* loop() {
     while (true) {
       isLoopRunning = true
@@ -121,6 +150,7 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
           getState: () => currentState,
           getInternalState: () => getInternalState(currentState),
           updateState: updateState,
+          updateInternalState: updateInternalState,
           handle: scheduleTask,
           done: () => {
             --numberOfRunningTasks

@@ -1,4 +1,13 @@
-import { ChainEffect, DelayEffect, LogEffect, LogLevel, ManyEffect, NewStateEffect } from './effects'
+import {
+  ChainEffect,
+  Channel,
+  ChannelMessage,
+  DelayEffect,
+  LogEffect,
+  LogLevel,
+  ManyEffect,
+  NewStateEffect, SendParams
+} from './effects'
 import { StatefulEffect } from './effects/stateful'
 
 const EFFECT = Symbol()
@@ -17,6 +26,8 @@ export type Effects<S extends State> = {
   chain: (...effects: Effect[]) => ChainEffect
   many: (...effects: Effect[]) => ManyEffect
   stateful: (toEffect: (state: PublicState<S>) => Effect) => StatefulEffect<S>
+  withMessages: (channel: Channel<unknown>, toEffect: (messages: ChannelMessage[]) => Effect) => StatefulEffect<S>
+  send: (params: SendParams) => StatefulEffect<S>
 }
 
 export type EffectHandlers<S extends State> = Record<any, {
@@ -29,12 +40,16 @@ export type PublicState<T extends State> = {
   [K in Exclude<keyof T, typeof INTERNAL_STATE>]: T[K]
 }
 
-export type StateUpdate<T extends State> = Partial<PublicState<T>> | ((previousState: PublicState<T>) => Partial<PublicState<T>>)
+export type StateUpdate<T extends State> =
+  Partial<PublicState<T>>
+  | ((previousState: PublicState<T>) => Partial<PublicState<T>>)
+export type InternalStateUpdate = Partial<InternalState> | ((previousState: InternalState) => Partial<InternalState>)
 
 export type EffectChannel<T extends State> = {
   getState: () => T
   getInternalState(): InternalState
   updateState: (state: StateUpdate<T>) => void
+  updateInternalState: (state: InternalStateUpdate) => void
   handle: (effect: Effect, onComplete?: () => void) => void
   done: () => void
 }
@@ -61,6 +76,19 @@ export type Runner = {
   <T extends State, E extends EffectHandlers<T>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>): void
 }
 
+export type SerializableValue = string | number | null
+
+export interface SerializableArray extends Array<SerializableData> {
+}
+
+export interface SerializableObject extends Record<string, SerializableData> {
+}
+
+export type SerializableData =
+  | SerializableValue
+  | SerializableArray
+  | SerializableObject
+
 export function isObject(input: unknown): input is object {
   return typeof input === 'object' && input !== null
 }
@@ -73,8 +101,14 @@ export function isEffect(input: unknown): input is Effect {
   return isObject(input) && hasProperty(input, 'type') && input.type === EFFECT
 }
 
-export function getInternalState<T extends State>(input: T) {
-  return input[INTERNAL_STATE]
+export function getInternalState<T extends State>(state: T) {
+  return state[INTERNAL_STATE]
+}
+
+export function wrapInternalState(state: InternalState) {
+  return {
+    [INTERNAL_STATE]: state,
+  }
 }
 
 export function withAddedInternalState<T>(state: T): State & T {
