@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES5",
+    "downlevelIteration": true,
+    "outDir": "dist",
+    "sourceMap": true,
+    "strict": true,
+    "alwaysStrict": true,
+    "incremental": true,
+    "importHelpers": true,
+    "lib": [
+      "dom",
+      "esnext"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
