@@ -1,5 +1,5 @@
-import { ManyEffect } from '../effects/many'
-import { EffectChannel, noop, State } from '../new'
+import { ManyEffect } from '../effects'
+import { EffectChannel, State } from '../lib'
 
 export function handleManyEffect<T extends State>(effect: ManyEffect, channel: EffectChannel<T>) {
   const effects = effect.effects

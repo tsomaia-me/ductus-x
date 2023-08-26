@@ -1,4 +1,4 @@
-import { createEffect, Effect, isEffect } from '../new'
+import { createEffect, Effect, isEffect } from '../lib'
 
 export const DELAY_EFFECT = Symbol('DELAY_EFFECT')
 

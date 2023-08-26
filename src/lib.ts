@@ -1,3 +1,6 @@
+import { ChainEffect, DelayEffect, LogEffect, LogLevel, ManyEffect, NewStateEffect } from './effects'
+import { StatefulEffect } from './effects/stateful'
+
 const EFFECT = Symbol()
 const INTERNAL_STATE = Symbol()
 
@@ -7,12 +10,29 @@ export type State = {
   [INTERNAL_STATE]: InternalState
 }
 
-export type PublicState<T extends State> = Omit<State, typeof INTERNAL_STATE>
+export type Effects<S extends State> = {
+  newState: (state: StateUpdate<S>) => NewStateEffect<S>
+  delay: (timeout: number) => DelayEffect
+  log: (level: LogLevel, ...args: unknown[]) => LogEffect
+  chain: (...effects: Effect[]) => ChainEffect
+  many: (...effects: Effect[]) => ManyEffect
+  stateful: (toEffect: (state: PublicState<S>) => Effect) => StatefulEffect<S>
+}
 
-export type StateUpdate<T extends State> = Partial<T> | ((previousState: T) => Partial<T>)
+export type EffectHandlers<S extends State> = Record<any, {
+  effect: (state: StateUpdate<S>) => NewStateEffect<S>
+  test: (input: unknown) => input is Effect
+  handle: (effect: Effect, channel: EffectChannel<S>) => void
+}>
+
+export type PublicState<T extends State> = {
+  [K in Exclude<keyof T, typeof INTERNAL_STATE>]: T[K]
+}
+
+export type StateUpdate<T extends State> = Partial<PublicState<T>> | ((previousState: PublicState<T>) => Partial<PublicState<T>>)
 
 export type EffectChannel<T extends State> = {
-  getState: () => State
+  getState: () => T
   getInternalState(): InternalState
   updateState: (state: StateUpdate<T>) => void
   handle: (effect: Effect, onComplete?: () => void) => void
@@ -21,11 +41,24 @@ export type EffectChannel<T extends State> = {
 
 export type EffectHandler<E extends Effect> = <T extends State>(effect: E, channel: EffectChannel<T>) => void
 
-export type App<T extends State> = (state: T) => Effect
+export type App<T extends State, E extends Effects<T>> = (state: T, effects_as_$: E) => Effect
 
 export interface Effect {
   type: typeof EFFECT
   key: symbol
+}
+
+export type RunnerParams<T extends State, E extends EffectHandlers<T>> = {
+  initialState: PublicState<T>
+  customEffectHandlers?: EffectHandlers<T>
+}
+
+export type EffectsFrom<T extends State, E extends EffectHandlers<T>> = Effects<T> & {
+  [K in keyof E]: E[K]['effect']
+}
+
+export type Runner = {
+  <T extends State, E extends EffectHandlers<T>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>): void
 }
 
 export function isObject(input: unknown): input is object {

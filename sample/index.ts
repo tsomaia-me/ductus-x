@@ -1,7 +1,5 @@
-import { createRunner } from '../src/runtime'
-import { app } from './new.app'
-
-const run = createRunner()
+import { run } from '../src'
+import { app } from './app'
 
 run(app, {
   initialState: {

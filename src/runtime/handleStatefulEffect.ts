@@ -1,7 +1,6 @@
-import { NewStateEffect } from '../effects'
 import { EffectChannel, State } from '../lib'
+import { StatefulEffect } from '../effects/stateful'
 
-export function handleNewStateEffect<T extends State>(effect: NewStateEffect<T>, channel: EffectChannel<T>) {
-  channel.updateState(effect.state)
-  channel.done()
+export function handleStatefulEffect<T extends State>(effect: StatefulEffect<T>, channel: EffectChannel<T>) {
+  channel.handle(effect.toEffect(channel.getState()), channel.done)
 }

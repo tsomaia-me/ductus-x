@@ -1,5 +1,5 @@
-import { ChainEffect } from '../effects/chain'
-import { EffectChannel, State } from '../new'
+import { ChainEffect } from '../effects'
+import { EffectChannel, State } from '../lib'
 
 export function handleChainEffect<T extends State>(effect: ChainEffect, channel: EffectChannel<T>) {
   void (async function chainLoop() {

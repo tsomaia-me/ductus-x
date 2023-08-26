@@ -1,4 +1,4 @@
-import { createEffect, Effect, isEffect } from '../new'
+import { createEffect, Effect, isEffect } from '../lib'
 
 export const MANY_EFFECT = Symbol('MANY_EFFECT')
 

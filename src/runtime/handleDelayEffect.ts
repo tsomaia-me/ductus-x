@@ -1,5 +1,5 @@
-import { DelayEffect } from '../effects/delay'
-import { EffectChannel, State } from '../new'
+import { DelayEffect } from '../effects'
+import { EffectChannel, State } from '../lib'
 
 export function handleDelayEffect<T extends State>(effect: DelayEffect, channel: EffectChannel<T>) {
   setTimeout(channel.done, effect.timeout)

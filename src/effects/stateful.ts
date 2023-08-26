@@ -1,19 +1,19 @@
-import { createEffect, Effect, isEffect } from '../lib'
+import { createEffect, Effect, isEffect, State } from '../lib'
 
-export const NEW_STATE_EFFECT = Symbol('NEW_STATE_EFFECT')
+export const STATEFUL_EFFECT = Symbol('STATEFUL_EFFECT')
 
-export interface NewStateEffect<T> extends Effect {
-  key: typeof NEW_STATE_EFFECT
-  state: T
+export interface StatefulEffect<T extends State> extends Effect {
+  key: typeof STATEFUL_EFFECT
+  toEffect: (state: T) => Effect
 }
 
-export function isNewStateEffect(input: unknown): input is NewStateEffect<unknown> {
-  return isEffect(input) && input.key === NEW_STATE_EFFECT
+export function isStatefulEffect(input: unknown): input is StatefulEffect<any> {
+  return isEffect(input) && input.key === STATEFUL_EFFECT
 }
 
-export function newState<T>(state: T): NewStateEffect<T> {
+export function stateful<T extends State>(toEffect: (state: T) => Effect): StatefulEffect<T> {
   return createEffect({
-    key: NEW_STATE_EFFECT,
-    state,
+    key: STATEFUL_EFFECT,
+    toEffect,
   })
 }

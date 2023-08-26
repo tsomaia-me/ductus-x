@@ -1,5 +1,5 @@
-import { LogEffect } from '../effects/log'
-import { EffectChannel, State } from '../new'
+import { LogEffect } from '../effects'
+import { EffectChannel, State } from '../lib'
 
 export function handleLogEffect<T extends State>(effect: LogEffect, channel: EffectChannel<T>) {
   switch (effect.level) {
