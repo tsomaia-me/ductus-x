@@ -1,5 +1,5 @@
-import { createChannel, debug, delay, Effect, Effects, many, selectMessages, State } from '../src'
-import { createWebSocketConnection } from '../src/connection/createWebSocketConnection'
+import { createChannel, debug, delay, Effect, Effects, many, selectMessages, State } from 'ductus'
+import { createWebSocketConnection } from 'ductus-websocket'
 
 export type AppState = State & {
   count: number
@@ -10,7 +10,9 @@ export type AppEffects = Effects<AppState>
 const main = createChannel({
   id: 1,
   size: 3,
-  connection: createWebSocketConnection(),
+  connector: createWebSocketConnection({
+    url: 'ws://localhost:8080'
+  }),
 })
 
 export function app(state: AppState, $: AppEffects): Effect {
@@ -22,7 +24,7 @@ export function app(state: AppState, $: AppEffects): Effect {
     $.send({
       channel: main,
       receiver: 1,
-      message:`Hello: ${state.count}`,
+      message: `Hello: ${state.count}`,
     })
     // delay(500, debug(state)),
     // delay(500, debug(state.count + 1)),

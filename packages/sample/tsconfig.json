@@ -14,8 +14,16 @@
       "dom",
       "esnext"
     ],
+    "baseUrl": "./src",
+    "paths": {
+      "ductus": ["../../../src/index.ts"],
+      "ductus-websocket": ["../../ductus-websocket/src/index.ts"]
+    }
   },
   "include": [
-    "src/**/*"
-  ]
+    "src/**/*",
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }

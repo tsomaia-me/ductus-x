@@ -6,9 +6,10 @@ import {
   LogEffect,
   LogLevel,
   ManyEffect,
-  NewStateEffect, SendParams
+  NewStateEffect,
+  SendParams,
+  StatefulEffect
 } from './effects'
-import { StatefulEffect } from './effects/stateful'
 
 const EFFECT = Symbol()
 const INTERNAL_STATE = Symbol()
@@ -26,7 +27,7 @@ export type Effects<S extends State> = {
   chain: (...effects: Effect[]) => ChainEffect
   many: (...effects: Effect[]) => ManyEffect
   stateful: (toEffect: (state: PublicState<S>) => Effect) => StatefulEffect<S>
-  withMessages: (channel: Channel<unknown>, toEffect: (messages: ChannelMessage[]) => Effect) => StatefulEffect<S>
+  withMessages: (channel: Channel, toEffect: (messages: ChannelMessage[]) => Effect) => StatefulEffect<S>
   send: (params: SendParams) => StatefulEffect<S>
 }
 
@@ -76,6 +77,29 @@ export type Runner = {
   <T extends State, E extends EffectHandlers<T>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>): void
 }
 
+export type ConnectionParams = {
+  channel: Channel
+  onOpen: (result: ConnectionResult) => void
+  onClose: () => void
+  onMessage: (message: ChannelMessage) => void
+  onDelivered: (messageId: number) => void
+  onError: (error: unknown) => void
+}
+
+export type ConnectionResult = {
+  participantId: number
+  peers: number[]
+}
+
+export type Connector = {
+  (params: ConnectionParams): Connection
+}
+
+export type Connection = {
+  send: (message: ChannelMessage) => void
+  close: () => void
+}
+
 export type SerializableValue = string | number | null
 
 export interface SerializableArray extends Array<SerializableData> {
@@ -88,6 +112,8 @@ export type SerializableData =
   | SerializableValue
   | SerializableArray
   | SerializableObject
+
+export type ArrayValue<T extends Array<unknown>> = T extends Array<infer U> ? U : never
 
 export function isObject(input: unknown): input is object {
   return typeof input === 'object' && input !== null
@@ -136,4 +162,12 @@ export function createEffect<T extends { key: symbol }>(params: T): Effect & T {
 }
 
 export function noop() {
+}
+
+export function toHashMap<T extends Array<string>>(...values: [...T]) {
+  return values.reduce((reduction, value) => {
+    reduction[value as unknown as keyof typeof reduction] = true
+
+    return reduction
+  }, {} as Record<ArrayValue<[...T]>, true>)
 }
