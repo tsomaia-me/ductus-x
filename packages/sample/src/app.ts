@@ -17,15 +17,16 @@ const main = createChannel({
 
 export function app(state: AppState, $: AppEffects): Effect {
   return many(
-    debug(selectMessages(main, state).map(m => m.message)),
+    // debug(selectMessages(main, state).map(m => m.message)),
     // delay(500),
-    $.stateful(state => delay(state.count * 500)),
+    // $.stateful(state => delay(state.count * 500)),
+    debug(state.count),
     $.newState({ count: state.count + 1 }),
-    $.send({
-      channel: main,
-      receiver: 1,
-      message: `Hello: ${state.count}`,
-    })
+    // $.send({
+    //   channel: main,
+    //   receiver: 1,
+    //   message: `Hello: ${state.count}`,
+    // })
     // delay(500, debug(state)),
     // delay(500, debug(state.count + 1)),
   )

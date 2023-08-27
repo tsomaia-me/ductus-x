@@ -68,6 +68,7 @@ const BUILT_IN_EFFECT_HANDLERS = <S extends State>() => ({
 type Task = {
   id: number
   effect: Effect
+  cancel?: () => void
   onComplete: () => void
 }
 
@@ -90,18 +91,20 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
   let numberOfRunningTasks = 0
   let isLoopRunning = false
 
-  function handleEffect<T extends State>(effect: Effect, channel: EffectChannel<T>) {
+  function handleEffect<T extends State>(effect: Effect, channel: EffectChannel<T>): () => void {
     for (let i = 0, l = keys.length; i < l; ++i) {
       const entry = effectHandlers[keys[i]]
 
       if (entry!.test(effect)) {
-        entry!.handle(effect as any, channel)
+        return entry!.handle(effect as any, channel)! ?? noop
       }
     }
+
+    return noop
   }
 
   function scheduleTask(effect: Effect, onComplete: () => void = noop) {
-    scheduledTasks.push({ id: numberOfRunningTasks, effect, onComplete })
+    scheduledTasks.unshift({ id: numberOfRunningTasks, effect, onComplete })
 
     if (!isLoopRunning) {
       loopGenerator.next()
@@ -121,6 +124,18 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
     currentState = {
       ...currentState,
       ...newState,
+    }
+    scheduledTasks = []
+    const runningTasksKeys = Object.keys(runningTasks) as unknown as Array<keyof typeof runningTasks>
+
+    for (let i = 0, l = runningTasksKeys.length; i < l; ++i) {
+      runningTasks[runningTasksKeys[i]].cancel?.()
+    }
+
+    scheduleTask(app(currentState, effects), onTopLevelTaskComplete)
+
+    if (!isLoopRunning) {
+      loopGenerator.next()
     }
   }
 
@@ -146,7 +161,8 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
 
         runningTasks[task.id] = task
         ++numberOfRunningTasks
-        handleEffect(task.effect, {
+
+        const cancel = handleEffect(task.effect, {
           getState: () => currentState,
           getInternalState: () => getInternalState(currentState),
           updateState: updateState,
@@ -157,6 +173,10 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
             task.onComplete()
           }
         })
+        task.cancel = () => {
+          cancel()
+          task.onComplete()
+        }
       }
       isLoopRunning = false
       yield

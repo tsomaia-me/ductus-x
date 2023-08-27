@@ -18,7 +18,15 @@ export function handleManyEffect<T extends State>(effect: ManyEffect, channel: E
     }
   }
 
+  const cancellers: Array<() => void> = []
+
   for (let i = 0, l = effects.length; i < l; ++i) {
-    channel.handle(effects[i], handleEffectDone)
+    const cancel = channel.handle(effects[i], handleEffectDone)
+
+    if (cancel) {
+      cancellers.push(cancel)
+    }
   }
+
+  return () => cancellers.forEach(cancel => cancel())
 }

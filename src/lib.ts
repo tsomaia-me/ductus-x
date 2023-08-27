@@ -34,7 +34,7 @@ export type Effects<S extends State> = {
 export type EffectHandlers<S extends State> = Record<any, {
   effect: (state: StateUpdate<S>) => NewStateEffect<S>
   test: (input: unknown) => input is Effect
-  handle: (effect: Effect, channel: EffectChannel<S>) => void
+  handle: (effect: Effect, channel: EffectChannel<S>) => void | (() => void)
 }>
 
 export type PublicState<T extends State> = {
@@ -51,7 +51,7 @@ export type EffectChannel<T extends State> = {
   getInternalState(): InternalState
   updateState: (state: StateUpdate<T>) => void
   updateInternalState: (state: InternalStateUpdate) => void
-  handle: (effect: Effect, onComplete?: () => void) => void
+  handle: (effect: Effect, onComplete?: () => void) => void | (() => void)
   done: () => void
 }
 
