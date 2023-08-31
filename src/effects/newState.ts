@@ -1,6 +1,6 @@
 import { createEffect, Effect, isEffect, State, StateUpdate } from '../lib'
 
-export const NEW_STATE_EFFECT = Symbol('NEW_STATE_EFFECT')
+const NEW_STATE_EFFECT = Symbol('NEW_STATE_EFFECT')
 
 export interface NewStateEffect<T extends State> extends Effect {
   key: typeof NEW_STATE_EFFECT

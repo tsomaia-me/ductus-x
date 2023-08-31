@@ -6,7 +6,7 @@ export type LogLevel =
   | 'debug'
   | 'error'
 
-export const LOG_EFFECT = Symbol('LOG_EFFECT')
+const LOG_EFFECT = Symbol('LOG_EFFECT')
 
 export interface LogEffect extends Effect {
   key: typeof LOG_EFFECT

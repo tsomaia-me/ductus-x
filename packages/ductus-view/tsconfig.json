@@ -10,21 +10,18 @@
     "alwaysStrict": true,
     "incremental": true,
     "importHelpers": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "ductus-view/runtime",
     "lib": [
       "dom",
       "esnext"
     ],
     "baseUrl": "./src",
     "paths": {
-      "ductus": ["../../../src/index.ts"],
-      "ductus-websocket": ["../../ductus-websocket/src/index.ts"],
-      "ductus-view": ["../../ductus-view/src/index.ts"]
-    }
+      "ductus": ["../../../src/index.ts"]
+    },
+    "types": ["src/types.d.ts"]
   },
   "include": [
-    "src/**/*",
+    "src/**/*"
   ],
   "ts-node": {
     "require": ["tsconfig-paths/register"]

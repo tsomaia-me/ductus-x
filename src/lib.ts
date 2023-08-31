@@ -10,6 +10,7 @@ import {
   SendParams,
   StatefulEffect
 } from './effects'
+import { _run } from './runtime'
 
 const EFFECT = Symbol()
 const INTERNAL_STATE = Symbol()
@@ -20,8 +21,12 @@ export type State = {
   [INTERNAL_STATE]: InternalState
 }
 
-export type Effects<S extends State> = {
-  newState: (state: StateUpdate<S>) => NewStateEffect<S>
+export type WithInternalState<T> = State & T
+
+export type Effects<S> = SafeEffects<WithInternalState<S>>
+
+export type SafeEffects<S extends State> = {
+  newState: (state: StateUpdate<WithInternalState<S>>) => NewStateEffect<S>
   delay: (timeout: number) => DelayEffect
   log: (level: LogLevel, ...args: unknown[]) => LogEffect
   chain: (...effects: Effect[]) => ChainEffect
@@ -31,23 +36,21 @@ export type Effects<S extends State> = {
   send: (params: SendParams) => StatefulEffect<S>
 }
 
-export type EffectHandlers<S extends State> = Record<any, {
-  effect: (state: StateUpdate<S>) => NewStateEffect<S>
+export type EffectHandlers<S> = Record<any, {
+  effect: (...args: any) => Effect
   test: (input: unknown) => input is Effect
-  handle: (effect: Effect, channel: EffectChannel<S>) => void | (() => void)
+  handle: (effect: Effect, channel: EffectChannel<WithInternalState<S>>) => void | (() => void)
 }>
 
 export type PublicState<T extends State> = {
   [K in Exclude<keyof T, typeof INTERNAL_STATE>]: T[K]
 }
 
-export type StateUpdate<T extends State> =
-  Partial<PublicState<T>>
-  | ((previousState: PublicState<T>) => Partial<PublicState<T>>)
+export type StateUpdate<T> = Partial<T> | ((previousState: T) => Partial<T>)
 export type InternalStateUpdate = Partial<InternalState> | ((previousState: InternalState) => Partial<InternalState>)
 
-export type EffectChannel<T extends State> = {
-  getState: () => T
+export type EffectChannel<T> = {
+  getState: () => WithInternalState<T>
   getInternalState(): InternalState
   updateState: (state: StateUpdate<T>) => void
   updateInternalState: (state: InternalStateUpdate) => void
@@ -57,24 +60,24 @@ export type EffectChannel<T extends State> = {
 
 export type EffectHandler<E extends Effect> = <T extends State>(effect: E, channel: EffectChannel<T>) => void
 
-export type App<T extends State, E extends Effects<T>> = (state: T, effects_as_$: E) => Effect
+export type App<T, E extends Effects<T>> = (state: T, effects_as_$: E) => Effect
 
 export interface Effect {
   type: typeof EFFECT
   key: symbol
 }
 
-export type RunnerParams<T extends State, E extends EffectHandlers<T>> = {
-  initialState: PublicState<T>
+export type RunnerParams<T, E extends EffectHandlers<T>> = {
+  initialState: T
   customEffectHandlers?: EffectHandlers<T>
 }
 
-export type EffectsFrom<T extends State, E extends EffectHandlers<T>> = Effects<T> & {
+export type EffectsFrom<T, E extends EffectHandlers<T>> = Effects<T> & {
   [K in keyof E]: E[K]['effect']
 }
 
 export type Runner = {
-  <T extends State, E extends EffectHandlers<T>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>): void
+  <T, E extends EffectHandlers<T>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>): void
 }
 
 export type ConnectionParams = {
@@ -170,4 +173,19 @@ export function toHashMap<T extends Array<string>>(...values: [...T]) {
 
     return reduction
   }, {} as Record<ArrayValue<[...T]>, true>)
+}
+
+export function createFactory<T, E extends EffectHandlers<any>>(params: RunnerParams<T, E>) {
+  function createApp(app: App<T, EffectsFrom<T, E>>) {
+    return app
+  }
+
+  function run(app: App<T, EffectsFrom<T, E>>) {
+    _run(app, params)
+  }
+
+  return {
+    createApp,
+    run,
+  }
 }

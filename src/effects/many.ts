@@ -1,6 +1,6 @@
 import { createEffect, Effect, isEffect } from '../lib'
 
-export const MANY_EFFECT = Symbol('MANY_EFFECT')
+const MANY_EFFECT = Symbol('MANY_EFFECT')
 
 export interface ManyEffect extends Effect {
   key: typeof MANY_EFFECT

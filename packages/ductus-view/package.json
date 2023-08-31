@@ -1,0 +1,13 @@
+{
+  "name": "ductus-view",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "devDependencies": {
+    "@types/websocket": "^1.0.6",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
+  }
+}

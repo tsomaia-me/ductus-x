@@ -31,7 +31,7 @@ import {
   RunnerParams,
   State,
   StateUpdate,
-  withAddedInternalState,
+  withAddedInternalState, WithInternalState,
   wrapInternalState
 } from './lib'
 import { handleChainEffect } from './runtime/handleChainEffect'
@@ -72,10 +72,10 @@ type Task = {
   onComplete: () => void
 }
 
-export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>) {
+export function _run<T, E extends EffectHandlers<any>>(app: App<T, EffectsFrom<T, E>>, params: RunnerParams<T, E>) {
   const loopGenerator = loop()
   const effectHandlers = {
-    ...BUILT_IN_EFFECT_HANDLERS<T>(),
+    ...BUILT_IN_EFFECT_HANDLERS<WithInternalState<T>>(),
     ...(params?.customEffectHandlers ?? {}),
   }
   const keys = Object.keys(effectHandlers) as Array<keyof typeof effectHandlers>
@@ -84,19 +84,19 @@ export function run<T extends State, E extends EffectHandlers<T>>(app: App<T, Ef
 
     return reduction
   }, {} as EffectsFrom<T, E>) as EffectsFrom<T, E>
-  let previousState = withAddedInternalState(params.initialState) as T
+  let previousState = withAddedInternalState(params.initialState) as WithInternalState<T>
   let currentState = previousState
   let scheduledTasks: Task[] = []
   let runningTasks: Record<number, Task> = {}
   let numberOfRunningTasks = 0
   let isLoopRunning = false
 
-  function handleEffect<T extends State>(effect: Effect, channel: EffectChannel<T>): () => void {
+  function handleEffect(effect: Effect, channel: EffectChannel<T>): () => void {
     for (let i = 0, l = keys.length; i < l; ++i) {
       const entry = effectHandlers[keys[i]]
 
       if (entry!.test(effect)) {
-        return entry!.handle(effect as any, channel)! ?? noop
+        return entry!.handle(effect as any, channel as any)! ?? noop
       }
     }
 

@@ -1,5 +1,6 @@
 import { createChannel, debug, delay, Effect, Effects, many, selectMessages, State } from 'ductus'
 import { createWebSocketConnection } from 'ductus-websocket'
+import { createApp } from './factory'
 
 export type AppState = State & {
   count: number
@@ -15,7 +16,7 @@ const main = createChannel({
   }),
 })
 
-export function app(state: AppState, $: AppEffects): Effect {
+export default createApp((state, $) => {
   return many(
     // debug(selectMessages(main, state).map(m => m.message)),
     // delay(500),
@@ -30,4 +31,4 @@ export function app(state: AppState, $: AppEffects): Effect {
     // delay(500, debug(state)),
     // delay(500, debug(state.count + 1)),
   )
-}
+})

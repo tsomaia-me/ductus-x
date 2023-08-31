@@ -1,6 +1,6 @@
 import { createEffect, Effect, isEffect } from '../lib'
 
-export const DELAY_EFFECT = Symbol('DELAY_EFFECT')
+const DELAY_EFFECT = Symbol('DELAY_EFFECT')
 
 export interface DelayEffect extends Effect {
   key: typeof DELAY_EFFECT

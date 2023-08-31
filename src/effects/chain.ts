@@ -1,6 +1,6 @@
 import { createEffect, Effect, isEffect } from '../lib'
 
-export const CHAIN_EFFECT = Symbol('CHAIN_EFFECT')
+const CHAIN_EFFECT = Symbol('CHAIN_EFFECT')
 
 export interface ChainEffect extends Effect {
   key: typeof CHAIN_EFFECT

@@ -1,8 +1,4 @@
-import { run } from 'ductus'
-import { app } from './app'
+import { run } from './factory'
+import app from './app'
 
-run(app, {
-  initialState: {
-    count: 0,
-  }
-})
+run(app)

@@ -11,7 +11,7 @@ import {
 } from '../lib'
 import { stateful } from './stateful'
 
-export const SEND_EFFECT = Symbol('SEND_EFFECT')
+const SEND_EFFECT = Symbol('SEND_EFFECT')
 const CHANNELS = Symbol('SEND_EFFECT')
 
 export type ChannelParams = {
